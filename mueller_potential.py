@@ -33,45 +33,7 @@ def MuellerPotentialGradient(x, a = np.array([-1,-1,-6.5,0.7]), b = np.array([0,
         U_2 += (b[i] * (x[0] - X[i]) + 2 * c[i] * (x[1] - Y[i])) * V
     return np.array([U_1, U_2])
 
-def createGraph(x, h, n):
-    X = np.zeros(n)
-    Y = np.zeros(n)
-    for i in range(n):
-        x = getNextIteration(x, h)
-        X[i] = x[0]
-        Y[i] = x[1]
-
-    plt.scatter(X, Y)
-    plt.show()
-
-def plotMuellerContours():
-    v_func = np.vectorize(MuellerPotentialNonVectorized)  # major key!
-
-    x, y = np.meshgrid(np.linspace(-1.5, 1.5, 100),
-                       np.linspace(-0.5, 2, 100))
-
-    fig, ax = plt.subplots(1)
-    ax.contour(x, y, v_func(x, y), 1000)
-    plt.show()
-
-def plotMuellerContours2():
-    v_func = np.vectorize(MuellerPotentialNonVectorized)  # major key!
-
-    X, Y = np.meshgrid(np.linspace(-1.5, 1.5, 100),
-                       np.linspace(-0.5, 2, 100))
-    plt.figure()
-    Z = v_func(X, Y)
-    tics = np.zeros(30)
-    for i in range(30):
-        tics[i] = -150 + 10*i
-    CS = plt.contour(X, Y, Z, tics)
-    plt.clabel(CS, inline=False, fontsize=10)
-    plt.show()
 
 def getFirstMinimum(x, h):
     while True:
         x = getNextIteration(x, h)
-
-
-plotMuellerContours2()
-#createGraph(np.array([0,0]), 10**-5, 100000)
