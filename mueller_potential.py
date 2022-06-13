@@ -16,6 +16,13 @@ def MuellerPotential(x, a = np.array([-1,-1,-6.5,0.7]), b = np.array([0,0,11,0.6
         ret += d[i] * np.e ** (a[i] * (x[0] - z[i])**2 + b[i] * (x[0] - z[i])*(x[1] - Y[i]) + c[i] * (x[1] - Y[i])**2)
     return ret
 
+def MuellerPotentialNonVectorized(x, y, a = np.array([-1,-1,-6.5,0.7]), b = np.array([0,0,11,0.6]), c = np.array([-10,-10,-6.5,0.7]),
+                     d = np.array([-200,-100,-170,15]), z = np.array([1,0,-0.5,-1]), Y = np.array([0,0.5,1.5,1])):
+    ret = 0
+    for i in range(0,4):
+        ret += d[i] * np.e ** (a[i] * (x - z[i])**2 + b[i] * (x - z[i])*(y - Y[i]) + c[i] * (y - Y[i])**2)
+    return ret
+
 def MuellerPotentialGradient(x, a = np.array([-1,-1,-6.5,0.7]), b = np.array([0,0,11,0.6]), c = np.array([-10,-10,-6.5,0.7]),
                      d = np.array([-200,-100,-170,15]), X = np.array([1,0,-0.5,-1]), Y = np.array([0,0.5,1.5,1])):
     U_1 = 0
@@ -37,9 +44,34 @@ def createGraph(x, h, n):
     plt.scatter(X, Y)
     plt.show()
 
+def plotMuellerContours():
+    v_func = np.vectorize(MuellerPotentialNonVectorized)  # major key!
+
+    x, y = np.meshgrid(np.linspace(-1.5, 1.5, 100),
+                       np.linspace(-0.5, 2, 100))
+
+    fig, ax = plt.subplots(1)
+    ax.contour(x, y, v_func(x, y), 1000)
+    plt.show()
+
+def plotMuellerContours2():
+    v_func = np.vectorize(MuellerPotentialNonVectorized)  # major key!
+
+    X, Y = np.meshgrid(np.linspace(-1.5, 1.5, 100),
+                       np.linspace(-0.5, 2, 100))
+    plt.figure()
+    Z = v_func(X, Y)
+    tics = np.zeros(30)
+    for i in range(30):
+        tics[i] = -150 + 10*i
+    CS = plt.contour(X, Y, Z, tics)
+    plt.clabel(CS, inline=False, fontsize=10)
+    plt.show()
+
 def getFirstMinimum(x, h):
     while True:
         x = getNextIteration(x, h)
 
 
-createGraph(np.array([0,0]), 10**-5, 100000)
+plotMuellerContours2()
+#createGraph(np.array([0,0]), 10**-5, 100000)
