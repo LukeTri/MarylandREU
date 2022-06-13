@@ -3,6 +3,7 @@ import numpy as np
 import numdifftools as nd
 import matplotlib.pyplot as plt
 
+
 def createGraph(x, h, n):
     X = np.zeros(n)
     Y = np.zeros(n)
@@ -14,4 +15,5 @@ def createGraph(x, h, n):
     plt.scatter(X, Y)
     plt.show()
 
-createGraph(np.array([0,0]), 10**-5, 100000)
+
+createGraph(np.array([0, 0]), 10 ** -5, 100000)

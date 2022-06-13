@@ -3,6 +3,7 @@ import numpy as np
 import numdifftools as nd
 import matplotlib.pyplot as plt
 
+
 def plotMuellerContours():
     v_func = np.vectorize(mp.MuellerPotentialNonVectorized)  # major key!
 
@@ -13,6 +14,7 @@ def plotMuellerContours():
     ax.contour(x, y, v_func(x, y), 1000)
     plt.show()
 
+
 def plotMuellerContours2():
     v_func = np.vectorize(mp.MuellerPotentialNonVectorized)  # major key!
 
@@ -22,9 +24,10 @@ def plotMuellerContours2():
     Z = v_func(X, Y)
     tics = np.zeros(30)
     for i in range(30):
-        tics[i] = -150 + 10*i
+        tics[i] = -150 + 10 * i
     CS = plt.contour(X, Y, Z, tics)
     plt.clabel(CS, inline=False, fontsize=10)
     plt.show()
+
 
 plotMuellerContours2()
