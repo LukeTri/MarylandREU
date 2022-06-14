@@ -3,6 +3,7 @@ import numdifftools as nd
 import matplotlib.pyplot as plt
 from scipy.optimize import fmin
 import math
+import colorsys
 
 MUELLERMIN1 = np.array([0.62347076, 0.02807048])
 MUELLERMIN2 = np.array([-0.04997089, 0.46671412])
@@ -64,5 +65,23 @@ def getFirstMinimum(x, h, delta):
             if np.linalg.norm(x - mumins[i]) < delta:
                 return i
 
-for i in range(10):
-    print(getFirstMinimum(np.array([0.2, 0.3]), 10 ** -5, 0.1))
+def getProbability(x, n, delta, h):
+    vals = np.zeros(3)
+    for i in range(n):
+        vals[getFirstMinimum(x, h, delta)] += 1
+    vals = vals/n
+    print(vals)
+    return vals
+
+def mapProbabilities(grid_size, num_minima, x_start, x_stop, y_start, y_stop, trials):
+    for i in range(grid_size):
+        for j in range(grid_size):
+            x = np.array([x_start + (x_stop - x_start) / grid_size, y_start + (y_stop - y_start) / grid_size])
+
+    HSV = [(float(x) / num_minima, 1, 1) for x in range(1, num_minima + 1)]
+    RGB = np.array([colorsys.hsv_to_rgb(*x) for x in HSV])
+    plt.scatter(range(num_minima), np.repeat(0.5, num_minima), c=RGB, s=200)
+    plt.show()
+
+
+mapProbabilities(100, 3, -1.5, 1.5, -0.5, 2, 10)
