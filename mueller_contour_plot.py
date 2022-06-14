@@ -22,9 +22,7 @@ def plotMuellerContours2():
                        np.linspace(-0.5, 2, 100))
     plt.figure()
     Z = v_func(X, Y)
-    tics = np.zeros(30)
-    for i in range(30):
-        tics[i] = -150 + 10 * i
+    tics = np.linspace(-150, 150, 30)
     CS = plt.contour(X, Y, Z, tics)
     plt.clabel(CS, inline=False, fontsize=10)
     plt.show()
