@@ -4,12 +4,13 @@ import numdifftools as nd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 plt.style.use('seaborn')
+updaters = []
 
 def getWalkData(x, n, h):
     X = np.zeros(n)
     Y = np.zeros(n)
     for i in range(n):
-        x = mp.getNextIteration(x, h)
+        x = mp.getNextIteration(x, h, updaters)
         X[i] = x[0]
         Y[i] = x[1]
     return X, Y

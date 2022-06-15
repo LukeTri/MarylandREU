@@ -14,10 +14,20 @@ mumins[1] = MUELLERMIN2
 mumins[2] = MUELLERMIN3
 
 
-def getNextIteration(x_0, h, b=1 / 20):
+def get_updated_gradient_offset(x_0, updaters, omega=5, sigma=0.05):
+    offset = np.array([0,0])
+    for q in range(len(updaters)):
+        xn1 = updaters[q][0]
+        xn2 = updaters[q][1]
+        exp = omega * np.e ** (-((x_0[0] - xn1)**2 + (x_0[1] - xn2)**2)/sigma)
+        offset[0] += exp * (-2 * x_0[0] + 2 * xn1) / (2*sigma)
+        offset[1] += exp * (-2 * x_0[1] + 2 * xn2) / (2*sigma)
+    return offset
+
+def getNextIteration(x_0, h, updators, b=1 / 20):
     xtemp = np.random.normal() * np.sqrt(2 * b ** -1 * h)
     ytemp = np.random.normal() * np.sqrt(2 * b ** -1 * h)
-    return x_0 - MuellerPotentialGradient(x_0) * h + np.array([xtemp, ytemp])
+    return x_0 - (MuellerPotentialGradient(x_0) + get_updated_gradient_offset(x_0, updators)) * h + np.array([xtemp, ytemp])
 
 
 def MuellerPotential(x, a=np.array([-1, -1, -6.5, 0.7]), b=np.array([0, 0, 11, 0.6]), c=np.array([-10, -10, -6.5, 0.7]),
@@ -59,29 +69,44 @@ def getMuellerMinima(x):
 
 
 def getFirstMinimum(x, h, delta):
+    updaters = []
     while True:
-        x = getNextIteration(x, h)
+        x = getNextIteration(x, h, updaters)
         for i in range(3):
             if np.linalg.norm(x - mumins[i]) < delta:
                 return i
+
 
 def getProbability(x, n, delta, h):
     vals = np.zeros(3)
     for i in range(n):
         vals[getFirstMinimum(x, h, delta)] += 1
     vals = vals/n
-    print(vals)
     return vals
 
-def mapProbabilities(grid_size, num_minima, x_start, x_stop, y_start, y_stop, trials):
+
+def mapProbabilities(grid_size, num_minima, x_start, x_stop, y_start, y_stop, trials, delta, h):
+    color_vals = np.zeros((grid_size, grid_size))
+    X = np.zeros(grid_size*grid_size)
+    Y = np.zeros(grid_size*grid_size)
     for i in range(grid_size):
         for j in range(grid_size):
-            x = np.array([x_start + (x_stop - x_start) / grid_size, y_start + (y_stop - y_start) / grid_size])
+            X[i*grid_size + j] = x_start + i * (x_stop - x_start) / grid_size
+            Y[i * grid_size + j] = y_start + j * (y_stop - y_start) / grid_size
+            x = np.array([x_start + i * (x_stop - x_start) / grid_size, y_start + j * (y_stop - y_start) / grid_size])
+            vals = getProbability(x, trials, delta, h)
+            for p in range(num_minima):
+                color_vals[i][j] = color_vals[i][j] + vals[p] * p / (num_minima)
 
-    HSV = [(float(x) / num_minima, 1, 1) for x in range(1, num_minima + 1)]
+    Z = np.ravel(color_vals, 'F')
+    print(X)
+    print(Y)
+    print(Z)
+    HSV = [(Z[x], 1, 1) for x in range(len(Z))]
     RGB = np.array([colorsys.hsv_to_rgb(*x) for x in HSV])
-    plt.scatter(range(num_minima), np.repeat(0.5, num_minima), c=RGB, s=200)
+
+    plt.scatter(X, Y, c=RGB)
     plt.show()
 
 
-mapProbabilities(100, 3, -1.5, 1.5, -0.5, 2, 10)
+mapProbabilities(80, 3, -1.5, 1.5, -0.5, 2, 8, 0.5, 10**-5)
