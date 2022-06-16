@@ -25,21 +25,31 @@ def get_updated_gradient_offset_gaussian(x_0, updaters, omega=5, sigma=0.05):
     return offset
 
 
-def get_updated_gradient_offset_collective_var(x_0, c, d, k=1000):
+def get_updated_gradient_offset_distance_from_line(x_0, c, d, k=1000):
     x_offset = k * c[0] * (c[0] * x_0[0] + c[1] * x_0[1] + d) / (c[0] ** 2 + c[1] ** 2)
     y_offset = k * c[1] * (c[0] * x_0[0] + c[1] * x_0[1] + d) / (c[0] ** 2 + c[1] ** 2)
     return -np.array([x_offset, y_offset])
 
 
-def getNextIteration(x_0, h, offset_func="", updaters=np.array([]), b=1 / 20, omega=5, sigma=0.05, c=np.array([-1, 1]),
-                     d=0, k=1000):
+def get_updated_gradient_offset_collective_var(x, c, d, z, k=1000):
+    alpha = -(c[0] * x[0] + x[1] * c[1] + d) / (c[0]**2 + c[1] ** 2)
+
+    d_x = -(c[0]) / (c[0] ** 2 + c[1] ** 2)
+    d_y = -(c[1]) / (c[0] ** 2 + c[1] ** 2)
+    x_offset = k * (2*x[0] + 2*c[0]*alpha - 2 * z[0] + 2*x[0]*c[0]*d_x - 2*c[0]*z[0]*d_x + 2*c[0]*c[0]*alpha*d_x)
+    y_offset = k * (2*x[1] + 2*c[1]*alpha - 2 * z[1] + 2*x[1]*c[1]*d_y - 2*c[1]*z[1]*d_y + 2*c[1]*c[1]*alpha*d_y)
+    return np.array([x_offset, y_offset])
+
+
+def getNextIteration(x_0, h, offset_func="", updaters=np.array([]), b=1 / 20, omega=5, sigma=0.05, c=np.array([-2, 1]),
+                     d=0, k=1000, z=np.array([0,0])):
     xtemp = np.random.normal() * np.sqrt(2 * b ** -1 * h)
     ytemp = np.random.normal() * np.sqrt(2 * b ** -1 * h)
     offset = 0
     if offset_func == "metadynamics":
         offset = get_updated_gradient_offset_gaussian(x_0, updaters, omega, sigma)
     elif offset_func == "umbrella":
-        offset = get_updated_gradient_offset_collective_var(x_0, c, d, k=k)
+        offset = get_updated_gradient_offset_collective_var(x_0, c, d, z, k=k)
     return x_0 - (MuellerPotentialGradient(x_0) + offset) * h + np.array([xtemp, ytemp])
 
 

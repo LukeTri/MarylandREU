@@ -19,6 +19,11 @@ from tqdm import tqdm
 updaters = []
 fig, ax = plt.subplots()
 
+start_x = -5
+end_x = 3
+start_y = -2
+end_y = 3
+
 
 def PolyArea(x, y):
     return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
@@ -50,29 +55,54 @@ def plot_countours():
     plt.clabel(CS, inline=False, fontsize=10)
 
 
-def createGraph(x, h, n, plot_row, plot_col, k=1000):
+def affine(c, d, x):
+    return (d-c[1] * x)/ c[0]
+
+
+def createGraph(x, h, n, plot_row, plot_col, k=1000,c=np.array([-2,1]), d=0, z=np.array([0,0])):
     updaters = []
     start = time.time()
     X = np.zeros(n)
     Y = np.zeros(n)
     for i in tqdm(range(n)):
-        x = mp.getNextIteration(x, h, offset_func="umbrella", updaters=updaters, k=k)
+        x = mp.getNextIteration(x, h, offset_func="umbrella", updaters=updaters, k=k,c=c,d=d,z=z)
         X[i] = x[0]
         Y[i] = x[1]
 
-    for i in range(len(updaters)):
-        ax.plot(updaters[i][0], updaters[i][1], markersize=20, marker="o")
     ax.scatter(X, Y)
+    new_x = np.linspace(start_x,end_x,10)
+    new_y = np.zeros(10)
+    for x in range(len(new_x)):
+        new_y[x] = affine(c, d, new_x[x])
+    ax.plot(new_x, new_y)
 
-    alpha_shape = alphashape.alphashape(np.array([*zip(X, Y)]), 0)
+    # alpha_shape = alphashape.alphashape(np.array([*zip(X, Y)]), 0)
 
-    ax.add_patch(PolygonPatch(alpha_shape, alpha=0.4))
+    # ax.add_patch(PolygonPatch(alpha_shape, alpha=0.4))
+
+    plotMuellerContours2()
 
     end = time.time()
     print(end - start)
 
 
-createGraph(np.array([0, 0]), 10 ** -5, 10000, 0, 0, k=1000)
+def plotMuellerContours2():
+    v_func = np.vectorize(mp.MuellerPotentialNonVectorized)  # major key!
+
+    X, Y = np.meshgrid(np.linspace(start_x, end_x, 100),
+                       np.linspace(start_y, end_y, 100))
+    Z = v_func(X, Y)
+    tics = np.array([-150, -125, -100, -75, -50, -25, 0,10, 40, 60,100,1000,10000,100000])
+    CS = ax.contour(X, Y, Z, tics,colors='green')
+    ax.clabel(CS, inline=False, fontsize=10)
+
+
+def get_forces(x, h, n, plot_row, plot_col, k=1000,c=np.array([-2,1]), d=0):
+    for i in range(5):
+        createGraph(np.array([0,i]), h, n, plot_row, plot_col, k=k,c=c, d=d)
+
+
+createGraph(np.array([0, 0]), 10 ** -5, 2000, 0, 0, k=10000,c=np.array([1,1]),d=0,z=np.array([-1,1]))
 
 ax.title.set_text('omega=5,time_step=1000')
 
