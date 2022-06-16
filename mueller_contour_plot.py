@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 def plotMuellerContours():
-    v_func = np.vectorize(mp.MuellerPotentialNonVectorized)  # major key!
+    v_func = np.vectorize(mp.MuellerPotentialNonVectorized)
 
     x, y = np.meshgrid(np.linspace(-1.5, 1.5, 100),
                        np.linspace(-0.5, 2, 100))
@@ -22,6 +22,7 @@ def plotMuellerContours2():
                        np.linspace(-0.5, 2, 100))
     plt.figure()
     Z = v_func(X, Y)
+    print(X)
     tics = np.linspace(-150, 150, 30)
     CS = plt.contour(X, Y, Z, tics)
     plt.clabel(CS, inline=False, fontsize=10)

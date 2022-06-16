@@ -29,10 +29,6 @@ def get_bounding_area(alpha_shape):
     return PolyArea(bound_x, bound_y)
 
 
-def gd(x_0, f, state=None, max_evaluations=1000):
-    print()
-
-
 def get_updated_offset(x, y, updaters, omega=5, sigma=0.05):
     offset = 0
     for q in range(len(updaters)):
@@ -40,6 +36,7 @@ def get_updated_offset(x, y, updaters, omega=5, sigma=0.05):
         xn2 = updaters[q][1]
         offset += omega * np.e ** (-((x - xn1)**2 + (y - xn2)**2)/sigma)
     return offset
+
 
 def plot_countours():
     X, Y = np.meshgrid(np.linspace(-1.5, 1.5, 100),
@@ -60,9 +57,9 @@ def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=Tru
     X = np.zeros(n)
     Y = np.zeros(n)
     for i in tqdm(range(n)):
-        # if (i % update_step_size) == update_step_size-1 and gaussian:
-            # updaters.append(x)
-        x = mp.getNextIteration(x, h, updaters,sigma=sigma, omega=omega)
+        if (i % update_step_size) == update_step_size-1 and gaussian:
+            updaters.append(x)
+        x = mp.getNextIteration(x, h, updaters=updaters, offset_func="metadynamics", sigma=sigma, omega=omega)
         X[i] = x[0]
         Y[i] = x[1]
 
@@ -72,15 +69,15 @@ def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=Tru
 
     alpha_shape = alphashape.alphashape(np.array([*zip(X, Y)]), 0)
 
-    # z1, f1, evaluations, h = gd(f, g, z_0, step_function, state)
-
     ax.add_patch(PolygonPatch(alpha_shape, alpha=0.4))
+
+    plot_countours()
 
     end = time.time()
     print(end - start)
 
 
-createGraph(np.array([0, 0]), 10 ** -5, 1000, 0, 0, omega=5)
+createGraph(np.array([0, 0]), 10 ** -5, 100000, 0, 0, omega=5)
 
 ax.title.set_text('omega=5,time_step=1000')
 
