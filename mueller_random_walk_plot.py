@@ -53,7 +53,6 @@ def plot_countours():
     CS = plt.contour(X, Y, Z, tics)
     plt.clabel(CS, inline=False, fontsize=10)
 
-
 def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=True, sigma=0.05, omega=20):
     updaters = []
     start = time.time()
@@ -65,9 +64,6 @@ def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=Tru
         x = mp.getNextIteration(x, h, updaters,sigma=sigma, omega=omega)
         X[i] = x[0]
         Y[i] = x[1]
-
-    for i in range(len(updaters)):
-        ax.plot(updaters[i][0], updaters[i][1], markersize=20, marker="o")
     ax.scatter(X, Y)
 
     alpha_shape = alphashape.alphashape(np.array([*zip(X, Y)]), 0)
@@ -80,7 +76,7 @@ def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=Tru
     print(end - start)
 
 
-createGraph(np.array([0, 0]), 10 ** -5, 1000, 0, 0, omega=5)
+createGraph(np.array([0, 0]), 10 ** -5, 100000, 0, 0, omega=5)
 
 ax.title.set_text('omega=5,time_step=1000')
 

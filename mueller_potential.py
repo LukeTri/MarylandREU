@@ -40,6 +40,14 @@ def get_updated_gradient_offset_collective_var(x, c, d, z, k=1000):
     y_offset = k * (2*x[1] + 2*c[1]*alpha - 2 * z[1] + 2*x[1]*c[1]*d_y - 2*c[1]*z[1]*d_y + 2*c[1]*c[1]*alpha*d_y)
     return np.array([x_offset, y_offset])
 
+def get_updated_gradient_offset_collective_var2(x, c, d, z, k=1000):
+    alpha = c[0] * x[0] + c[1] * x[1] - z
+    x_offset = k * 2 * c[0] * alpha
+    y_offset = k * 2 * c[1] * alpha
+
+    return np.array([x_offset, y_offset])
+
+
 
 def getNextIteration(x_0, h, offset_func="", updaters=np.array([]), b=1 / 20, omega=5, sigma=0.05, c=np.array([-2, 1]),
                      d=0, k=1000, z=np.array([0,0])):
@@ -49,7 +57,7 @@ def getNextIteration(x_0, h, offset_func="", updaters=np.array([]), b=1 / 20, om
     if offset_func == "metadynamics":
         offset = get_updated_gradient_offset_gaussian(x_0, updaters, omega, sigma)
     elif offset_func == "umbrella":
-        offset = get_updated_gradient_offset_collective_var(x_0, c, d, z, k=k)
+        offset = get_updated_gradient_offset_collective_var2(x_0, c, d, z, k=k)
     return x_0 - (MuellerPotentialGradient(x_0) + offset) * h + np.array([xtemp, ytemp])
 
 
