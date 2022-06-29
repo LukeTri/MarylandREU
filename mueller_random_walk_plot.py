@@ -15,6 +15,7 @@ from descartes import PolygonPatch
 import alphashape
 from numpy import linalg as npl
 from tqdm import tqdm
+import csv
 
 updaters = []
 fig, ax = plt.subplots()
@@ -28,9 +29,6 @@ def get_bounding_area(alpha_shape):
     bound_x, bound_y = alpha_shape.exterior.coords.xy
     return PolyArea(bound_x, bound_y)
 
-
-def gd(x_0, f, state=None, max_evaluations=1000):
-    print()
 
 
 def get_updated_offset(x, y, updaters, omega=5, sigma=0.05):
@@ -53,7 +51,7 @@ def plot_countours():
     CS = plt.contour(X, Y, Z, tics)
     plt.clabel(CS, inline=False, fontsize=10)
 
-def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=True, sigma=0.05, omega=20):
+def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=True, sigma=0.05, omega=20, b = 1/20):
     updaters = []
     start = time.time()
     X = np.zeros(n)
@@ -61,7 +59,7 @@ def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=Tru
     for i in tqdm(range(n)):
         # if (i % update_step_size) == update_step_size-1 and gaussian:
             # updaters.append(x)
-        x = mp.getNextIteration(x, h, updaters,sigma=sigma, omega=omega)
+        x = mp.getNextIteration(x, h, updaters,sigma=sigma, omega=omega, b=b)
         X[i] = x[0]
         Y[i] = x[1]
     ax.scatter(X, Y)
@@ -74,9 +72,26 @@ def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=Tru
 
     end = time.time()
     print(end - start)
+    return X,Y
 
+mp.plot_contours()
 
-createGraph(np.array([0, 0]), 10 ** -5, 100000, 0, 0, omega=5)
+X, Y = createGraph(np.array([0, 0]), 10 ** -5, 500000, 0, 0, omega=5,b=1/30)
+
+header = ['X', 'Y']
+data = np.vstack((X,Y)).T
+print(np.shape(data))
+data = np.ndarray.tolist(data)
+print(len(data))
+
+with open('mueller_standard_b=0.033_n=500000.csv', 'w', encoding='UTF8', newline='') as f:
+    writer = csv.writer(f)
+
+    # write the header
+    writer.writerow(header)
+
+    # write multiple rows
+    writer.writerows(data)
 
 ax.title.set_text('omega=5,time_step=1000')
 

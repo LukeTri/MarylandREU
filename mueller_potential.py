@@ -48,6 +48,16 @@ def get_updated_gradient_offset_collective_var2(x, c, d, z, k=1000):
     return np.array([x_offset, y_offset])
 
 
+def plot_contours(x_start=-1.5, x_end=1.5, y_start=-0.5, y_end=2, n=100):
+    v_func = np.vectorize(MuellerPotentialNonVectorized)  # major key!
+
+    X, Y = np.meshgrid(np.linspace(x_start, x_end, n),
+                       np.linspace(y_start, y_end, n))
+    Z = v_func(X, Y)
+    tics = np.linspace(-150, 150, 30)
+    CS = plt.contour(X, Y, Z, tics)
+    plt.clabel(CS, inline=False, fontsize=10)
+
 
 def getNextIteration(x_0, h, offset_func="", updaters=np.array([]), b=1 / 20, omega=5, sigma=0.05, c=np.array([-2, 1]),
                      d=0, k=1000, z=np.array([0,0])):
