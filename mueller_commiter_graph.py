@@ -1,9 +1,8 @@
 import colorsys
-import mueller_potential as mp
+from euler_maruyama import euler_maruyama_white_noise as mp
 import numpy as np
-import numdifftools as nd
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+
 
 def mapProbabilities(grid_size, num_minima, x_start, x_stop, y_start, y_stop, trials, delta, h):
     color_vals = np.zeros((grid_size, grid_size))
