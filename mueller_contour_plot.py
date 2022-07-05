@@ -1,3 +1,5 @@
+from matplotlib import colors
+
 import mueller_potential as mp
 import numpy as np
 import numdifftools as nd
@@ -20,12 +22,15 @@ def plotMuellerContours2():
 
     X, Y = np.meshgrid(np.linspace(-1.5, 1.5, 100),
                        np.linspace(-0.5, 2, 100))
-    plt.figure()
     Z = v_func(X, Y)
     print(X)
-    tics = np.linspace(-150, 150, 30)
-    CS = plt.contour(X, Y, Z, tics)
-    plt.clabel(CS, inline=False, fontsize=10)
+    tics = np.linspace(-150, 150, 15)
+    plt.contour(X, Y, Z, tics,colors='grey',linewidths=1)
+
+
+    plt.pcolormesh(X, Y, Z, norm=colors.SymLogNorm(linthresh=100),cmap='viridis', shading='gouraud')
+    plt.colorbar()
+
     plt.show()
 
 

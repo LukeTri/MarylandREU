@@ -84,7 +84,7 @@ print(np.shape(data))
 data = np.ndarray.tolist(data)
 print(len(data))
 
-with open('mueller_standard_b=0.033_n=500000.csv', 'w', encoding='UTF8', newline='') as f:
+with open('data/mueller_standard_b=0.033_n=500000.csv', 'w', encoding='UTF8', newline='') as f:
     writer = csv.writer(f)
 
     # write the header

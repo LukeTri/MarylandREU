@@ -54,9 +54,8 @@ def plot_contours(x_start=-1.5, x_end=1.5, y_start=-0.5, y_end=2, n=100):
     X, Y = np.meshgrid(np.linspace(x_start, x_end, n),
                        np.linspace(y_start, y_end, n))
     Z = v_func(X, Y)
-    tics = np.linspace(-150, 150, 30)
-    CS = plt.contour(X, Y, Z, tics)
-    plt.clabel(CS, inline=False, fontsize=10)
+    tics = np.linspace(-150, 150, 15)
+    CS = plt.contour(X, Y, Z, tics,colors = 'grey',linewidth=5)
 
 
 def getNextIteration(x_0, h, offset_func="", updaters=np.array([]), b=1 / 20, omega=5, sigma=0.05, c=np.array([-2, 1]),
@@ -68,6 +67,7 @@ def getNextIteration(x_0, h, offset_func="", updaters=np.array([]), b=1 / 20, om
         offset = get_updated_gradient_offset_gaussian(x_0, updaters, omega, sigma)
     elif offset_func == "umbrella":
         offset = get_updated_gradient_offset_collective_var2(x_0, c, d, z, k=k)
+
     return x_0 - (MuellerPotentialGradient(x_0) + offset) * h + np.array([xtemp, ytemp])
 
 

@@ -187,7 +187,6 @@ def neural_net(x, y, probs):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            print(i)
 
             if epoch % 100 == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
@@ -197,16 +196,22 @@ def neural_net(x, y, probs):
     print(labels[:5])
     print(outputs.shape)
     print(labels.shape)
+    torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': loss}, 'data/mueller_model_diffusion_b=0.033_n=100000_hs=500_ep=5000_lr=0.01_bs=500.pth')
+
     return model
 
 
-def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=True, sigma=0.05, omega=5):
+def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=True, sigma=0.05, omega=5, b = 1/30):
     updaters = []
     start = time.time()
     X = np.zeros(n)
     Y = np.zeros(n)
     for i in tqdm(range(n)):
-        x = mp.getNextIteration(x, h, updaters,sigma=sigma, omega=omega,b=1/40)
+        x = mp.getNextIteration(x, h, updaters,sigma=sigma, omega=omega,b=b)
         X[i] = x[0]
         Y[i] = x[1]
 
@@ -243,6 +248,7 @@ def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=Tru
     plt.scatter(x_data, y_data,s=100, c=colors)
     plt.show()
 
+
     m = np.arange(-1.5, 1.5, 0.05)
     p = np.arange(-.5, 2, 0.05)
 
@@ -262,6 +268,7 @@ def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=Tru
     print(end - start)
 
 
-createGraph(np.array([0, 0]), 10 ** -5, 50000, 0, 0, omega=5)
+if __name__ == "__main__":
+    createGraph(np.array([0, 0]), 10 ** -5, 100000, 0, 0, omega=5)
 
 plt.show()
