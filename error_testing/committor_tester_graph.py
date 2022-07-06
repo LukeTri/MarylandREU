@@ -48,7 +48,7 @@ plt.colorbar()
 
 plt.show()
 
-file = open('../data/fe_mueller_b=0.033.csv')
+file = open('data/fe_mueller_b=0.033.csv')
 csvreader = csv.reader(file)
 header = []
 header = next(csvreader)

@@ -1,11 +1,14 @@
+from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR
+
 from Dataset import Dataset
+
+import torch.nn as nn
 import csv
 
 from euler_maruyama import euler_maruyama_white_noise as mp
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-import torch.nn as nn
 
 MUELLERMINA = torch.tensor([0.62347076, 0.02807048])
 MUELLERMINB = torch.tensor([-0.55821361, 1.44174872])
@@ -20,7 +23,7 @@ hidden_size = 10
 output_size = 1
 num_epochs = 50
 batch_size = 10000
-learning_rate = 0.000001
+learning_rate = 0.1
 num_classes = 1
 momentum = 0.90
 
@@ -32,7 +35,9 @@ x = np.array([0, 0])
 omega = 5
 sigma = 0.05
 b = 1 / 30
+b_prime = 1 / 50
 h = 10 ** -5
+
 
 
 class NeuralNet(nn.Module):
@@ -40,18 +45,15 @@ class NeuralNet(nn.Module):
         super(NeuralNet, self).__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
         torch.nn.init.xavier_uniform(self.fc1.weight, gain=nn.init.calculate_gain('linear'))
-        self.sig1 = nn.Tanh()
+        self.tanh2 = nn.Tanh()
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        torch.nn.init.xavier_uniform(self.fc2.weight, gain=nn.init.calculate_gain('linear'))
+
+        self.tanh1 = nn.Tanh()
         self.fc3 = nn.Linear(hidden_size, num_classes)
         torch.nn.init.xavier_uniform(self.fc3.weight, gain=nn.init.calculate_gain('linear'))
-        self.sig3 = nn.Sigmoid()
 
-    def get_committor(self, x):
-        out = self.fc1(x)
-        out = self.sig1(out)
-        out = self.fc3(out)
-        out = self.sig3(out)
-        out = (1 - chi_A_s(x)) * ((1 - chi_B_s(x)) * out + chi_B_s(x))
-        return out
+        self.sig3 = nn.Sigmoid()
 
     def forward(self, x):
         x.requires_grad = True
@@ -59,7 +61,9 @@ class NeuralNet(nn.Module):
         self.fc3.weight.requires_grad = True
 
         out = self.fc1(x)
-        out = self.sig1(out)
+        out = self.tanh1(out)
+        out = self.fc2(out)
+        out = self.tanh2(out)
         out = self.fc3(out)
         out = self.sig3(out)
         out = out.squeeze()
@@ -89,7 +93,7 @@ def chi_B(x):
 
 
 def main():
-    file = open('../data/mueller_standard_b=0.033_n=500000.csv')
+    file = open('data/mueller_standard_b=0.02_n=1000000.csv')
     csvreader = csv.reader(file)
     header = []
     header = next(csvreader)
@@ -103,9 +107,10 @@ def main():
         for j in range(len(rows[i])):
             arr[i][j] = float(rows[i][j])
 
+    Npts,d = np.shape(arr)
+    X = arr[0:Npts:10, 0]
+    Y = arr[0:Npts:10, 1]
 
-    X = arr[:, 0]
-    Y = arr[:, 1]
 
     plt.scatter(X, Y)
     mp.plot_contours()
@@ -141,7 +146,10 @@ def main():
 
     model = NeuralNet(input_size, hidden_size, num_classes).to(device)
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    lambda1 = lambda epoch: 1 ** epoch
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)
     # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     total_step = len(training_generator)
@@ -152,6 +160,8 @@ def main():
             outputs = torch.autograd.grad(outputs, samples, allow_unused=True, retain_graph=True,
                                       grad_outputs=torch.ones_like(outputs), create_graph=True)[0]
             outputs = outputs.pow(2).sum(1)
+            outputs = outputs * torch.exp(-(b - b_prime) * torch.tensor(mp.MuellerPotentialNonVectorized(
+                samples[:,0].detach().numpy(), samples[:,1].detach().numpy())))
             loss = outputs.sum()
             loss.backward()
             # Backward and optimize
@@ -164,7 +174,7 @@ def main():
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
-                'loss': loss}, '../data/test')
+                'loss': loss}, 'data/test')
     # data/mueller_model_standard_b=0.033_n=100000_hs=20_ep=20_lr=0.000001_bs=10000.pth
 
     m = np.arange(-1.5, 1.5, 0.05)
@@ -174,9 +184,9 @@ def main():
     Z = np.zeros((len(p), len(m)))
     for i in range(len(m)):
         for j in range(len(p)):
-            tens = torch.tensor([X[j][i], Y[j][i]])
+            tens = torch.tensor([[X[j][i], Y[j][i]]])
             tens = tens.float()
-            Z[j][i] = model.get_committor(tens)
+            Z[j][i] = model(tens)
 
     plt.pcolormesh(X, Y, Z, shading='gouraud')
     plt.colorbar()

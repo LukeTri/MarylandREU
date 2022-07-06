@@ -69,7 +69,7 @@ def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=Tru
 
 mp.plot_contours()
 
-X, Y = createGraph(np.array([0, 0]), 10 ** -5, 500000, 0, 0, omega=5,b=1/30)
+X, Y = createGraph(np.array([0, 0]), 10 ** -5, 100000, 0, 0, omega=5,b=1/50)
 
 header = ['X', 'Y']
 data = np.vstack((X,Y)).T
@@ -77,7 +77,7 @@ print(np.shape(data))
 data = np.ndarray.tolist(data)
 print(len(data))
 
-with open('../../data/mueller_standard_b=0.033_n=500000.csv', 'w', encoding='UTF8', newline='') as f:
+with open('data/mueller_standard_b=0.02_n=100000.csv', 'w', encoding='UTF8', newline='') as f:
     writer = csv.writer(f)
 
     # write the header
