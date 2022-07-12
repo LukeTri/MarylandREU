@@ -44,7 +44,7 @@ def plot_countours():
     plt.clabel(CS, inline=False, fontsize=10)
 
 
-def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=True, sigma=0.05, omega=20):
+def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=True, sigma=0.05, omega=5):
     updaters = []
     start = time.time()
     X = np.zeros(n)

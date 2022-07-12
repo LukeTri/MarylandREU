@@ -29,7 +29,7 @@ loss = checkpoint['loss']
 
 model.eval()
 
-file = open('../data/mueller_standard_b=0.033_n=500000.csv')
+file = open('../data/mueller_standard_b=0.033_n=1000000.csv')
 csvreader = csv.reader(file)
 header = []
 header = next(csvreader)
@@ -41,7 +41,7 @@ file.close()
 samples = np.zeros((len(rows), len(rows[0])))
 for i in range(len(rows)):
     for j in range(len(rows[i])):
-            samples[i][j] = float(rows[i][j])
+        samples[i][j] = float(rows[i][j])
 
 
 file = open('../data/fe_mueller_b=0.033.csv')
@@ -71,10 +71,13 @@ interp_vals = interp_vals[ind]
 
 MSE = 0
 
-model_vals = 1-model(torch.tensor(samples, dtype=torch.float)).detach().numpy()
+model_vals = model(torch.tensor(samples, dtype=torch.float)).detach().numpy()
 model_vals = model_vals[ind]
 
-print(interp_vals - model_vals)
+x = (interp_vals - model_vals) ** 2
+
+print(max(x))
+print(sum(x)/len(x))
 
 RMSE = np.sqrt(np.sum((interp_vals - model_vals) ** 2 / len(interp_vals)))
 

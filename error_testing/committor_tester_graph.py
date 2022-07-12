@@ -13,7 +13,7 @@ input_size = 2
 hidden_size = 10
 output_size = 1
 num_classes = 1
-learning_rate = 0.000001
+learning_rate = 0.1
 
 
 
@@ -66,7 +66,7 @@ arr = torch.zeros((len(rows), len(rows[0])))
 for i in tqdm(range(len(rows))):
     for j in range(len(rows[i])):
         arr[i][j] = float(rows[i][j])
-    est_vals[i] = 1-model(torch.tensor([[arr[i][0], arr[i][1]]], dtype=torch.float))
+    est_vals[i] = model(torch.tensor([[arr[i][0], arr[i][1]]], dtype=torch.float))
     act_vals[i] = arr[i][2]
 
 X = arr[:, 0]

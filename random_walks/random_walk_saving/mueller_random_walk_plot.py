@@ -29,7 +29,7 @@ def get_updated_offset(x, y, updaters, omega=5, sigma=0.05):
     for q in range(len(updaters)):
         xn1 = updaters[q][0]
         xn2 = updaters[q][1]
-        offset += omega * np.e ** (-((x - xn1)**2 + (y - xn2)**2)/sigma)
+        offset += omega * np.exp(-((x - xn1)**2 + (y - xn2)**2)/sigma)
     return offset
 
 def plot_countours():
@@ -44,15 +44,15 @@ def plot_countours():
     CS = plt.contour(X, Y, Z, tics)
     plt.clabel(CS, inline=False, fontsize=10)
 
-def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=True, sigma=0.05, omega=20, b = 1/20):
-    updaters = []
+
+def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=True, sigma=0.05, omega=5, b = 1/30):
     start = time.time()
     X = np.zeros(n)
     Y = np.zeros(n)
     for i in tqdm(range(n)):
-        # if (i % update_step_size) == update_step_size-1 and gaussian:
-            # updaters.append(x)
-        x = mp.getNextIteration(x, h, updaters,sigma=sigma, omega=omega, b=b)
+        if (i % update_step_size) == update_step_size-1 and gaussian:
+            updaters.append(x)
+        x = mp.getNextIteration(x, h, updaters=updaters, offset_func="metadynamics", sigma=sigma, omega=omega, b=b)
         X[i] = x[0]
         Y[i] = x[1]
     ax.scatter(X, Y)
@@ -69,22 +69,23 @@ def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=Tru
 
 mp.plot_contours()
 
-X, Y = createGraph(np.array([0, 0]), 10 ** -5, 100000, 0, 0, omega=5,b=1/50)
+X, Y = createGraph(np.array([0, 0]), 10 ** -5, 1000000, 0, 0, omega=5,b=1/30)
 
 header = ['X', 'Y']
 data = np.vstack((X,Y)).T
-print(np.shape(data))
 data = np.ndarray.tolist(data)
-print(len(data))
+print(updaters)
+print(np.shape(updaters))
 
-with open('data/mueller_standard_b=0.02_n=100000.csv', 'w', encoding='UTF8', newline='') as f:
+with open('/data/mueller_metadynamics_b=0.033_n=1000000_test.csv', 'w', encoding='UTF8', newline='') as f:
     writer = csv.writer(f)
-
     # write the header
     writer.writerow(header)
 
     # write multiple rows
     writer.writerows(data)
+    writer.writerow("S")
+    writer.writerows(updaters)
 
 ax.title.set_text('omega=5,time_step=1000')
 

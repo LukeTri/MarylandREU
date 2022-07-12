@@ -30,13 +30,14 @@ momentum = 0.90
 # Sampling parameters
 step_size = 100
 n = 100000
-updaters = np.array([])
 x = np.array([0, 0])
 omega = 5
 sigma = 0.05
 b = 1 / 30
 b_prime = 1 / 50
 h = 10 ** -5
+art_temp = False
+metadyanamics = False
 
 
 
@@ -44,14 +45,11 @@ class NeuralNet(nn.Module):
     def __init__(self, input_size, hidden_size, num_classes):
         super(NeuralNet, self).__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
-        torch.nn.init.xavier_uniform(self.fc1.weight, gain=nn.init.calculate_gain('linear'))
         self.tanh2 = nn.Tanh()
         self.fc2 = nn.Linear(hidden_size, hidden_size)
-        torch.nn.init.xavier_uniform(self.fc2.weight, gain=nn.init.calculate_gain('linear'))
 
         self.tanh1 = nn.Tanh()
         self.fc3 = nn.Linear(hidden_size, num_classes)
-        torch.nn.init.xavier_uniform(self.fc3.weight, gain=nn.init.calculate_gain('linear'))
 
         self.sig3 = nn.Sigmoid()
 
@@ -93,13 +91,20 @@ def chi_B(x):
 
 
 def main():
-    file = open('data/mueller_standard_b=0.02_n=1000000.csv')
+    file = open('/data/mueller_metadynamics_b=0.033_n=1000000_test.csv')
     csvreader = csv.reader(file)
     header = []
     header = next(csvreader)
     rows = []
+    rows2 = []
+    cutoff = False
     for row in csvreader:
+        if row[0] == "S":
+            cutoff = True
+        elif not cutoff:
             rows.append(row)
+        else:
+            rows2.append(row)
     file.close()
 
     arr = np.zeros((len(rows), len(rows[0])))
@@ -107,17 +112,37 @@ def main():
         for j in range(len(rows[i])):
             arr[i][j] = float(rows[i][j])
 
+    if len(rows2) == 0:
+        updaters = []
+    else:
+        updaters = np.zeros((len(rows2), len(rows2[0])))
+        for i in range(len(rows2)):
+            for j in range(len(rows2[i])):
+                updaters[i][j] = float(rows2[i][j])
+
     Npts,d = np.shape(arr)
     X = arr[0:Npts:10, 0]
     Y = arr[0:Npts:10, 1]
-
+    print(np.shape(X))
 
     plt.scatter(X, Y)
+    for i in range(len(updaters)):
+        plt.plot(updaters[i][0], updaters[i][1], markersize=20, marker="o")
     mp.plot_contours()
     plt.show()
 
+    x = np.linspace(-1,1,50)
+    y = np.linspace(-1,1,50)
+    x_grid, y_grid = np.meshgrid(x,y)
+    v_mpot_grid = np.zeros((len(x_grid), len(x_grid[0])))
+    for i in range(len(x_grid)):
+        for j in range(len(x_grid[i])):
+            temp = torch.tensor(np.array([x_grid[i][j], y_grid[i][j]]))
+            temp = temp.unsqueeze(0)
+            v_mpot_grid[i][j] = mp.get_updated_offset_gaussian(temp, updaters)
 
-
+    plt.contour(x_grid, y_grid, v_mpot_grid, np.linspace(np.amin(v_mpot_grid), np.amax(v_mpot_grid), 20))
+    plt.show()
     newX = np.zeros(len(X) // step_size)
     newY = np.zeros(len(Y) // step_size)
     for i in range(len(newX)):
@@ -148,8 +173,7 @@ def main():
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    lambda1 = lambda epoch: 1 ** epoch
-    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer,gamma=0.5)
     # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     total_step = len(training_generator)
@@ -160,15 +184,24 @@ def main():
             outputs = torch.autograd.grad(outputs, samples, allow_unused=True, retain_graph=True,
                                       grad_outputs=torch.ones_like(outputs), create_graph=True)[0]
             outputs = outputs.pow(2).sum(1)
-            outputs = outputs * torch.exp(-(b - b_prime) * torch.tensor(mp.MuellerPotentialNonVectorized(
-                samples[:,0].detach().numpy(), samples[:,1].detach().numpy())))
-            loss = outputs.sum()
+            if art_temp:
+                outputs = outputs * torch.exp(-(b - b_prime) * torch.tensor(mp.MuellerPotentialNonVectorized(
+                    samples[:,0].detach().numpy(), samples[:,1].detach().numpy())))
+            elif metadyanamics:
+
+                outputs = outputs * torch.exp(b * (mp.get_updated_offset_gaussian(samples, updaters)))
+            loss = torch.sqrt(outputs.sum())
             loss.backward()
-            # Backward and optimize
+
             optimizer.step()
+            # Backward and optimize
+
             if (epoch + 1) % 5 == 0 and i % 3 == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
                       .format(epoch + 1, num_epochs, i + 1, total_step, loss.item() / batch_size))
+        # scheduler.step()
+        # if (epoch + 1) % 5 == 0:
+            # print(scheduler.state_dict()['_last_lr'])
 
     torch.save({
                 'epoch': epoch,

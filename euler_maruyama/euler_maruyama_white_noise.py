@@ -1,5 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
+import torch
 
 MUELLERMIN1 = np.array([0.62347076, 0.02807048])
 MUELLERMIN2 = np.array([-0.04997089, 0.46671412])
@@ -15,10 +16,20 @@ def get_updated_gradient_offset_gaussian(x_0, updaters, omega=5, sigma=0.05):
     for q in range(len(updaters)):
         xn1 = updaters[q][0]
         xn2 = updaters[q][1]
-        exp = omega * np.e ** (-((x_0[0] - xn1) ** 2 + (x_0[1] - xn2) ** 2) / sigma)
-        offset[0] += exp * (-2 * x_0[0] + 2 * xn1) / (2 * sigma)
-        offset[1] += exp * (-2 * x_0[1] + 2 * xn2) / (2 * sigma)
+        exp = omega * np.exp(-((x_0[0] - xn1) ** 2 + (x_0[1] - xn2) ** 2) / (2*sigma))
+        offset[0] += exp * (-2 * x_0[0] + 2 * xn1) / (2*sigma)
+        offset[1] += exp * (-2 * x_0[1] + 2 * xn2) / (2*sigma)
     return offset
+
+def get_updated_offset_gaussian(x_0, updaters, omega=5, sigma=0.05):
+    offset = np.zeros(len(x_0))
+    x_0 = x_0.cpu().detach().numpy()
+    for q in range(len(updaters)):
+        xn1 = updaters[q][0]
+        xn2 = updaters[q][1]
+        exp = omega * np.exp(-((x_0[:,0] - xn1) ** 2 + (x_0[:,1] - xn2) ** 2) / (2*sigma))
+        offset += exp
+    return torch.tensor(offset)
 
 
 def get_updated_gradient_offset_collective_var(x, c, d, z, k=1000):
@@ -49,6 +60,15 @@ def MuellerPotentialNonVectorized(x, y, a=np.array([-1, -1, -6.5, 0.7]), b=np.ar
     ret = 0
     for i in range(0, 4):
         ret += d[i] * np.e ** (a[i] * (x - z[i]) ** 2 + b[i] * (x - z[i]) * (y - Y[i]) + c[i] * (y - Y[i]) ** 2)
+    return ret
+
+def MuellerPotentialVectorized(x, a=np.array([-1, -1, -6.5, 0.7]), b=np.array([0, 0, 11, 0.6]),
+                                  c=np.array([-10, -10, -6.5, 0.7]),
+                                  d=np.array([-200, -100, -170, 15]), z=np.array([1, 0, -0.5, -1]),
+                                  Y=np.array([0, 0.5, 1.5, 1])):
+    ret = 0
+    for i in range(0, 4):
+        ret += d[i] * np.e ** (a[i] * (x[:,0] - z[i]) ** 2 + b[i] * (x[:,0] - z[i]) * (x[:,1] - Y[i]) + c[i] * (x[:,1] - Y[i]) ** 2)
     return ret
 
 
