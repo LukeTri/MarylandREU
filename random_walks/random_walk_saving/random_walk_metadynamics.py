@@ -1,6 +1,6 @@
 import time
 
-from euler_maruyama import euler_maruyama_white_noise as mp
+from euler_maruyama import euler_maruyama_white_noise_mueller as mp
 import autograd.numpy as np
 import matplotlib.pyplot as plt
 
@@ -50,7 +50,6 @@ def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=Tru
     X = np.zeros(n)
     Y = np.zeros(n)
     for i in tqdm(range(n)):
-        print(updaters)
         x = mp.getNextIteration(x, h, updaters=updaters, offset_func="metadynamics", sigma=sigma, omega=omega, b=b)
         X[i] = x[0]
         Y[i] = x[1]
@@ -68,7 +67,7 @@ def createGraph(x, h, n, plot_row, plot_col, update_step_size=1000, gaussian=Tru
 
 mp.plot_contours()
 
-file = open('/data/mueller_metadynamics_b=0.033_n=1000000_test.csv')
+file = open('/Users/luke/PycharmProjects/MarylandREU/data/mueller_metadynamics_b=0.033_n=1000000.csv')
 csvreader = csv.reader(file)
 header = []
 header = next(csvreader)
@@ -97,7 +96,7 @@ else:
         for j in range(len(rows2[i])):
             updaters[i][j] = float(rows2[i][j])
 
-X, Y = createGraph(np.array([0, 0]), 10 ** -5, 100000, 0, 0, omega=5,b=1/30)
+X, Y = createGraph(np.array([0, 0]), 10 ** -5, 200000, 0, 0, omega=5,b=1/10)
 
 header = ['X', 'Y']
 data = np.vstack((X,Y)).T
@@ -105,7 +104,7 @@ data = np.ndarray.tolist(data)
 print(updaters)
 print(np.shape(updaters))
 
-with open('/data/mueller_metadynamics_b=0.033_n=100000.csv', 'w', encoding='UTF8', newline='') as f:
+with open('/Users/luke/PycharmProjects/MarylandREU/data/mueller_metadynamics_b=0.1_n=200000_precomputed.csv', 'w', encoding='UTF8', newline='') as f:
     writer = csv.writer(f)
     # write the header
     writer.writerow(header)

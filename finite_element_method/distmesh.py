@@ -80,7 +80,7 @@ def fixmesh(pts,tri):
 
 def distmesh2D(fd,fh,h0,bbox,pfix):
     # parameters
-    dptol=.01
+    dptol=.005
     ttol=.1
     Fscale=1.2 
     deltat=.2 

@@ -1,6 +1,6 @@
 import time
 
-from euler_maruyama import euler_maruyama_white_noise as mp
+from euler_maruyama import euler_maruyama_white_noise_mueller as mp
 import autograd.numpy as np
 import matplotlib.pyplot as plt
 

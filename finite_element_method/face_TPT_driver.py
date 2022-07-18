@@ -29,37 +29,50 @@ import csv
 
 
 # In[3]:
+potential_func = "mueller"
 
+if potential_func == "face":
+    # parameters for the face potential
+    xa=-3
+    ya=3
+    xb=0
+    yb=4.5
+    par = np.array([xa,ya,xb,yb]) # centers of sets A and B
 
-# parameters for the face potential
-xa=-3 
-ya=3
-xb=0 
-yb=4.5
-par = np.array([xa,ya,xb,yb]) # centers of sets A and B
-
-# parameters for the mueller potential
-xa=0.62
-ya=0.03
-xb=-0.55
-yb=1.44
-par = np.array([xa,ya,xb,yb]) # centers of sets A and B
+else:
+    # parameters for the mueller potential
+    xa=0.62
+    ya=0.03
+    xb=-0.55
+    yb=1.44
+    par = np.array([xa,ya,xb,yb]) # centers of sets A and B
 
 # problem setup: choose sets A and B and the outer boundary
 # set A is the circle with center at (xa,ya) and radius ra
 # set B is the circle with center at (xb,yb) and radius rb
-ra = 0.1 # radius of set A
-rb = 0.1 # radius of set B
-beta = 1/30 # beta = 1/(k_B T), T = temperature, k_B = Boltzmann's constant
-Vbdry = 50 # level set of the outer boundary {x : fpot(x) = Vbdry}
-neg_bdry = -150
+if potential_func == "face":
+    ra = 0.5  # radius of set A
+    rb = 0.5  # radius of set B
+else:
+    ra = 0.1 # radius of set A
+    rb = 0.1 # radius of set B
+
+
+beta = 1/20 # beta = 1/(k_B T), T = temperature, k_B = Boltzmann's constant
+
+if potential_func == "face":
+    Vbdry = 15  # level set of the outer boundary {x : fpot(x) = Vbdry}
+    neg_bdry = 0
+else:
+    Vbdry = 150 # level set of the outer boundary {x : fpot(x) = Vbdry}
+    neg_bdry = -150
 
 # if generate_mesh = True, mesh is generated and saves as csv files
 # if generate_mesh = False, mesh is downloaded from those csv files
 generate_mesh = True
 
 # h0 is the desired scalind parameter for the mesh
-h0 = 0.02
+h0 = 0.04
 
 
 def face2(xy, a=np.array([-1, -1, -6.5, 0.7]), b=np.array([0, 0, 11, 0.6]),
@@ -98,12 +111,16 @@ x_vec = np.reshape(x_grid, (nxy,1))
 y_vec = np.reshape(y_grid, (nxy,1))
 v = np.zeros(nxy)
 xy = np.concatenate((x_vec,y_vec),axis=1)
-v = face2(xy)
+if potential_func == "face":
+    v = face(xy)
+else:
+    v = face2(xy)
 vmin = np.amin(v)
 v_grid = np.reshape(v,(nx,ny))    
 # graphics
 plt.rcParams.update({'font.size': 20})
-ls = plt.contour(x_grid,y_grid,v_grid,np.arange(neg_bdry,Vbdry,20))
+
+ls = plt.contour(x_grid,y_grid,v_grid,np.arange(neg_bdry,Vbdry,5))
 plt.colorbar(label="Potential function", orientation="vertical")
 axes=plt.gca()
 axes.set_aspect(1)
@@ -152,7 +169,10 @@ if generate_mesh == True:
     pfix[Na+Nb:Nfix,:] = pts_outer
 
     def dfunc(p):
-        d0 = face2(p)
+        if potential_func == "face":
+            d0 = face(p)
+        else:
+            d0 = face2(p)
         dA = dcircle(p,xa,ya,ra)
         dB = dcircle(p,xb,yb,rb)
         d = ddiff(d0-Vbdry,dunion(dA,dB))
@@ -183,12 +203,14 @@ NAind,Aind = find_ABbdry_pts(pts,xa,ya,ra,h0) # find mesh points on \partial A
 NBind,Bind = find_ABbdry_pts(pts,xb,yb,rb,h0) # find mesh points on \partial B
 
 def fpot(pts):
+    if potential_func == "face":
+        return face(pts)
     return face2(pts)
 
 # find the committor
 q = FEM_committor_solver(pts,tri,Aind,Bind,fpot,beta)
 
 TPTdata = np.concatenate((pts,np.reshape(q,(Npts,1))),axis = 1)
-with open('../data/fe_mueller_b=0.033.csv', 'w', newline='') as file:
+with open('/Users/luke/PycharmProjects/MarylandREU/data/fe_mueller_b=0.05.csv', 'w', newline='') as file:
     mywriter = csv.writer(file, delimiter=',')
     mywriter.writerows(TPTdata)

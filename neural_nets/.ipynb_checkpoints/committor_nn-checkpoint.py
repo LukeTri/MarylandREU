@@ -3,7 +3,7 @@ from Dataset import Dataset
 import torch.nn as nn
 import csv
 
-from euler_maruyama import euler_maruyama_white_noise as mp
+from euler_maruyama import euler_maruyama_white_noise_mueller as mp
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
@@ -165,7 +165,7 @@ def main():
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
-                'loss': loss}, 'data/test')
+                'loss': loss}, 'data/test_face')
     # data/mueller_model_standard_b=0.033_n=100000_hs=20_ep=20_lr=0.000001_bs=10000.pth
 
     m = np.arange(-1.5, 1.5, 0.05)

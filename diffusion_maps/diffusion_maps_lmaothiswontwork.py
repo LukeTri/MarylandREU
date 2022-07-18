@@ -101,7 +101,7 @@ def MakeSpiral():
     ax.scatter(x, y, z, c=c)
 
     test = np.linspace(0, len(w), len(w))
-    #ax.plot(test, w)
+    #ax.plot(test_face, w)
 
     plt.show()
 

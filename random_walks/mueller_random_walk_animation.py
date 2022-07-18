@@ -1,4 +1,4 @@
-from euler_maruyama import euler_maruyama_white_noise as mp
+from euler_maruyama import euler_maruyama_white_noise_mueller as mp
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation

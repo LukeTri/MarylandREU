@@ -1,8 +1,11 @@
 from matplotlib import colors
 
-from euler_maruyama import euler_maruyama_white_noise as mp
+from euler_maruyama import euler_maruyama_white_noise_mueller as mp
 import numpy as np
 import matplotlib.pyplot as plt
+
+MUELLERMINA = np.array([0.62347076, 0.02807048])
+MUELLERMINB = np.array([-0.55821361, 1.44174872])
 
 
 def plotMuellerContours():
@@ -27,9 +30,14 @@ def plotMuellerContours2():
     plt.contour(X, Y, Z, tics,colors='grey',linewidths=1)
 
 
-    plt.pcolormesh(X, Y, Z, norm=colors.SymLogNorm(linthresh=100),cmap='viridis', shading='gouraud')
-    plt.colorbar()
+    #plt.pcolormesh(X, Y, Z, norm=colors.SymLogNorm(linthresh=100),cmap='viridis', shading='gouraud')
+    #plt.colorbar()
 
+    plt.plot(MUELLERMINA[0], MUELLERMINA[1], marker='o',markersize=20,c='red')
+    plt.plot(MUELLERMINB[0], MUELLERMINB[1], marker='o',markersize=20,c='blue')
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.title("Mueller Potential")
     plt.show()
 
 
