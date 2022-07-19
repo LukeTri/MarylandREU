@@ -11,20 +11,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 
-n = 100
+n = 200
 x_start = -1.5
 x_end = 1.5
 y_start = -0.5
 y_end = 2
 
-x = np.linspace(x_start, x_end, n)
-y = np.linspace(y_start, y_end, n)
-
-grid = np.meshgrid(x, y)
-
 FILE_PATH = "/Users/luke/PycharmProjects/MarylandREU/data"
-NN_PATH = "/net_mueller_b=0.1_art_temp=0.05_n=1000000_step=5_hs=50_layers=2"
-EM_PATH = "/face_standard=0.33_n=1000000.csv"
+NN_PATH = "/net_pinn_EM_2"
+EM_PATH = "/mueller_standard_b=0.033_n=1000000.csv"
 
 MUELLERMINA = torch.tensor([0.62347076, 0.02807048])
 MUELLERMINB = torch.tensor([-0.55821361, 1.44174872])
@@ -36,10 +31,7 @@ yb=4.5
 FACEMINA = torch.tensor([xa, ya])
 FACEMINB = torch.tensor([xb, yb])
 
-potential_func = "face"
-art_temp = False
-metadyanamics = False
-
+potential_func = "mueller"
 
 radius = 0.1
 epsilon = 0.05
@@ -50,23 +42,15 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 input_size = 2
 hidden_size = 10
 output_size = 1
-num_epochs = 50
-batch_size = 100000
-learning_rate = 0.1
+num_epochs = 200
+batch_size = 10000
+learning_rate = 0.2
 num_classes = 1
 momentum = 0.90
 
 # Sampling parameters
 step_size = 100
-n = 100000
-x = np.array([0, 0])
-omega = 5
-sigma = 0.05
 b = 1 / 10
-b_prime = 1 / 20
-h = 10 ** -5
-
-
 
 class NeuralNet(nn.Module):
     def __init__(self, input_size, hidden_size, num_classes):
@@ -81,10 +65,8 @@ class NeuralNet(nn.Module):
         self.sig3 = nn.Sigmoid()
 
     def forward(self, x):
-        x.requires_grad = True
         self.fc1.weight.requires_grad = True
         self.fc3.weight.requires_grad = True
-
         out = self.fc1(x)
         out = self.tanh1(out)
         out = self.fc2(out)
@@ -95,20 +77,6 @@ class NeuralNet(nn.Module):
         out = (1 - chi_A(x)) * ((1 - chi_B(x)) * out + chi_B(x))
 
         return out
-
-
-def chi_A_s(x):
-    m = torch.nn.Tanh()
-    if potential_func == "face":
-        return 0.5 - 0.5 * m(1000 * ((x - FACEMINA).pow(2).sum() - (radius + 0.02) ** 2))
-    return 0.5 - 0.5 * m(1000 * ((x - MUELLERMINA).pow(2).sum() - (radius + 0.02) ** 2))
-
-
-def chi_B_s(x):
-    m = torch.nn.Tanh()
-    if potential_func == "face":
-        return 0.5 - 0.5 * m(1000 * ((x - FACEMINB).pow(2).sum() - (radius + 0.02) ** 2))
-    return 0.5 - 0.5 * m(1000 * ((x - MUELLERMINB).pow(2).sum() - (radius + 0.02) ** 2))
 
 
 def chi_A(x):
@@ -128,8 +96,7 @@ def chi_B(x):
 def main():
     file = open(FILE_PATH + EM_PATH)
     csvreader = csv.reader(file)
-    header = []
-    header = next(csvreader)
+    next(csvreader)
     rows = []
     rows2 = []
     cutoff = False
@@ -155,40 +122,20 @@ def main():
             for j in range(len(rows2[i])):
                 updaters[i][j] = float(rows2[i][j])
 
-    Npts,d = np.shape(arr)
-    X = arr[0:Npts:5, 0]
-    Y = arr[0:Npts:5, 1]
-    print(np.shape(X))
+    Npts, d = np.shape(arr)
+    X = arr[0:Npts:25, 0]
+    Y = arr[0:Npts:25, 1]
 
-    plt.scatter(X, Y)
-    #for i in range(len(updaters)):
-        #plt.plot(updaters[i][0], updaters[i][1], markersize=20, marker="o")
     if potential_func == "face":
         fp.plot_contours()
     else:
         mp.plot_contours()
+
+    plt.scatter(X,Y,marker='o',s=1)
     plt.show()
 
-    x = np.linspace(-1,1,50)
-    y = np.linspace(-1,1,50)
-    x_grid, y_grid = np.meshgrid(x,y)
-    v_mpot_grid = np.zeros((len(x_grid), len(x_grid[0])))
-    for i in range(len(x_grid)):
-        for j in range(len(x_grid[i])):
-            temp = torch.tensor(np.array([x_grid[i][j], y_grid[i][j]]))
-            temp = temp.unsqueeze(0)
-            if potential_func == "face":
-                v_mpot_grid[i][j] = 0
-            else:
-                v_mpot_grid[i][j] = mp.get_updated_offset_gaussian(temp, updaters)
-
-    plt.contour(x_grid, y_grid, v_mpot_grid, np.linspace(np.amin(v_mpot_grid), np.amax(v_mpot_grid), 20))
-    plt.show()
-    newX = np.zeros(len(X) // step_size)
-    newY = np.zeros(len(Y) // step_size)
-    for i in range(len(newX)):
-        newX[i] = X[i * step_size]
-        newY[i] = Y[i * step_size]
+    X = np.ravel(X)
+    Y = np.ravel(Y)
 
     s = np.vstack((X, Y)).T
 
@@ -208,43 +155,41 @@ def main():
     training_set = Dataset(x_train, y_train)
     training_generator = torch.utils.data.DataLoader(training_set, batch_size=batch_size, shuffle=True)
 
-    x_train, y_train, x_valid, y_valid = map(torch.tensor, (x_train, y_train, x_valid, y_valid))
-
     model = NeuralNet(input_size, hidden_size, num_classes).to(device)
+    loss_func = torch.nn.MSELoss()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer,gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer,gamma=0.997)
     # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     total_step = len(training_generator)
     for epoch in range(num_epochs):
         for i, (samples, labels) in enumerate(training_generator):
             optimizer.zero_grad()
-            outputs = model(samples)
-            outputs = torch.autograd.grad(outputs, samples, allow_unused=True, retain_graph=True,
-                                      grad_outputs=torch.ones_like(outputs), create_graph=True)[0]
-            outputs = outputs.pow(2).sum(1)
-            if art_temp:
-                if potential_func == "face":
-                    outputs = outputs * torch.exp(-(b - b_prime) * torch.tensor(fp.face_non_vectorized(
-                        samples[:, 0].detach().numpy(), samples[:, 1].detach().numpy())))
-                else:
-                    outputs = outputs * torch.exp(-(b - b_prime) * torch.tensor(mp.MuellerPotentialNonVectorized(
-                        samples[:, 0].detach().numpy(), samples[:, 1].detach().numpy())))
-            elif metadyanamics:
-                if potential_func == "face":
-                    pass
-                else:
-                    outputs = outputs * torch.exp(b * (mp.get_updated_offset_gaussian(samples, updaters)))
+            samples.requires_grad = True
+            divs = laplacian(samples, model.forward, keep_graph=True, create_graph=True, return_grad=True)
+            term1 = divs[0]
+            term1 = term1 * b ** -1
+            vals = divs[2]
+            vals2 = mp.mueller_grad_vectorized_torch(samples)
+            term2 = torch.zeros(len(term1))
+            for j in range(len(vals)):
+                term2[j] = torch.dot(vals[j], vals2[j])
 
-            loss = torch.sqrt(outputs.sum())
+            outputs = term1 + term2
+            loss = loss_func(outputs, labels)
             loss.backward()
 
             optimizer.step()
             # Backward and optimize
 
-            if (epoch + 1) % 5 == 0 and i % 3 == 0:
+            if (epoch + 1) % 2 == 0 and i % 3 == 0:
+                # arr = samples.detach().numpy()
+                # plt.scatter(X,Y,marker='o',s=1)
+                # plt.scatter(arr[:,0], arr[:,1],marker='o',s=10, c='red')
+                #
+                # plt.show()
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
                       .format(epoch + 1, num_epochs, i + 1, total_step, loss.item() / batch_size))
         # scheduler.step()
@@ -286,6 +231,27 @@ def main():
 
     plt.show()
 
+
+def laplacian(xs, f, create_graph=False, keep_graph=None, return_grad=False):
+    xis = [xi.requires_grad_() for xi in xs.flatten(start_dim=1).t()]
+    xs_flat = torch.stack(xis, dim=1)
+    ys = f(xs_flat.view_as(xs))
+    (ys_g, *other) = ys if isinstance(ys, tuple) else (ys, ())
+    ones = torch.ones_like(ys_g)
+    (dy_dxs,) = torch.autograd.grad(ys_g, xs_flat, ones, create_graph=True)
+    lap_ys = sum(
+        torch.autograd.grad(
+            dy_dxi, xi, ones, retain_graph=True, create_graph=create_graph
+        )[0]
+        for xi, dy_dxi in zip(xis, (dy_dxs[..., i] for i in range(len(xis))))
+    )
+    if not (create_graph if keep_graph is None else keep_graph):
+        ys = (ys_g.detach(), *other) if isinstance(ys, tuple) else ys.detach()
+    result = lap_ys, ys
+    if return_grad:
+        result += (dy_dxs.detach().view_as(xs),)
+    return result
+
 # X = np.zeros(n)
 # Y = np.zeros(n)
 # for i in tqdm(range(n)):
@@ -294,6 +260,25 @@ def main():
 #     Y[i] = x[1]
 # plt.scatter(X, Y)
 
+def test(x):
+    return x[:,0]**2 + 10*x[:,0]*x[:,1] + 3*x[:,1]**2
+
+def grad_test(x):
+    ret = np.zeros_like(x)
+    term1 = 2*x[:,0] + 10*x[:,1]
+    term2 = 10*x[:,0] + 6*x[:,1]
+    ret[:,0] = term1
+    ret[:,1] = term2
+    return ret
 
 if __name__ == "__main__":
+    # arr = np.zeros((10,2))
+    # for i in range(len(arr)):
+    #     arr[i] = np.random.randn(2) * 10
+    # real_grad = grad_test(arr)
+    # torch_arr = torch.from_numpy(arr).float()
+    # torch_arr.requires_grad = True
+    # print(torch_arr)
+    #
+    # lapl = laplacian(torch_arr, test,return_grad=True)
     main()

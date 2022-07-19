@@ -10,6 +10,13 @@ mumins[0] = MUELLERMIN1
 mumins[1] = MUELLERMIN2
 mumins[2] = MUELLERMIN3
 
+a = np.array([-1, -1, -6.5, 0.7])
+b = np.array([0, 0, 11, 0.6])
+c = np.array([-10, -10, -6.5, 0.7])
+d = np.array([-200, -100, -170, 15])
+z=np.array([1, 0, -0.5, -1])
+Y=np.array([0, 0.5, 1.5, 1])
+
 
 def get_updated_gradient_offset_gaussian(x_0, updaters, omega=5, sigma=0.05):
     offset = np.array([0, 0])
@@ -53,19 +60,13 @@ def getNextIteration(x_0, h, offset_func="", updaters=np.array([]), b=1 / 20, om
     return x_0 - (MuellerPotentialGradient(x_0) + offset) * h + np.array([xtemp, ytemp])
 
 
-def MuellerPotentialNonVectorized(x, y, a=np.array([-1, -1, -6.5, 0.7]), b=np.array([0, 0, 11, 0.6]),
-                                  c=np.array([-10, -10, -6.5, 0.7]),
-                                  d=np.array([-200, -100, -170, 15]), z=np.array([1, 0, -0.5, -1]),
-                                  Y=np.array([0, 0.5, 1.5, 1])):
+def MuellerPotentialNonVectorized(x, y):
     ret = 0
     for i in range(0, 4):
         ret += d[i] * np.e ** (a[i] * (x - z[i]) ** 2 + b[i] * (x - z[i]) * (y - Y[i]) + c[i] * (y - Y[i]) ** 2)
     return ret
 
-def MuellerPotentialVectorized(x, a=np.array([-1, -1, -6.5, 0.7]), b=np.array([0, 0, 11, 0.6]),
-                                  c=np.array([-10, -10, -6.5, 0.7]),
-                                  d=np.array([-200, -100, -170, 15]), z=np.array([1, 0, -0.5, -1]),
-                                  Y=np.array([0, 0.5, 1.5, 1])):
+def MuellerPotentialVectorized(x):
     ret = 0
     for i in range(0, 4):
         ret += d[i] * np.e ** (a[i] * (x[:,0] - z[i]) ** 2 + b[i] * (x[:,0] - z[i]) * (x[:,1] - Y[i]) + c[i] * (x[:,1] - Y[i]) ** 2)
@@ -82,15 +83,24 @@ def plot_contours(x_start=-1.5, x_end=1.5, y_start=-0.5, y_end=2, n=100):
     CS = plt.contour(X, Y, Z, tics, colors='grey', linewidth=5)
 
 
-def MuellerPotentialGradient(x, a=np.array([-1, -1, -6.5, 0.7]), b=np.array([0, 0, 11, 0.6]),
-                             c=np.array([-10, -10, -6.5, 0.7]),
-                             d=np.array([-200, -100, -170, 15]), X=np.array([1, 0, -0.5, -1]),
-                             Y=np.array([0, 0.5, 1.5, 1])):
+def mueller_grad_vectorized_torch(x):
+    U_1 = torch.zeros(len(x))
+    U_2 = torch.zeros(len(x))
+    for i in range(4):
+        V = d[i] * torch.e ** (
+                a[i] * (x[:,0] - z[i]) ** 2 + b[i] * (x[:,0] - z[i]) * (x[:,1] - Y[i]) + c[i] * (x[:,1] - Y[i]) ** 2)
+        temp = (2 * a[i] * (x[:,0] - z[i]) + b[i] * (x[:,1] - Y[i])) * V
+        U_1 += (2 * a[i] * (x[:,0] - z[i]) + b[i] * (x[:,1] - Y[i])) * V
+        U_2 += (b[i] * (x[:,0] - z[i]) + 2 * c[i] * (x[:,1] - Y[i])) * V
+    return torch.stack([U_1, U_2],dim=1)
+
+
+def MuellerPotentialGradient(x):
     U_1 = 0
     U_2 = 0
     for i in range(4):
         V = d[i] * np.e ** (
-                a[i] * (x[0] - X[i]) ** 2 + b[i] * (x[0] - X[i]) * (x[1] - Y[i]) + c[i] * (x[1] - Y[i]) ** 2)
-        U_1 += (2 * a[i] * (x[0] - X[i]) + b[i] * (x[1] - Y[i])) * V
-        U_2 += (b[i] * (x[0] - X[i]) + 2 * c[i] * (x[1] - Y[i])) * V
+                a[i] * (x[0] - z[i]) ** 2 + b[i] * (x[0] - z[i]) * (x[1] - Y[i]) + c[i] * (x[1] - Y[i]) ** 2)
+        U_1 += (2 * a[i] * (x[0] - z[i]) + b[i] * (x[1] - Y[i])) * V
+        U_2 += (b[i] * (x[0] - z[i]) + 2 * c[i] * (x[1] - Y[i])) * V
     return np.array([U_1, U_2])

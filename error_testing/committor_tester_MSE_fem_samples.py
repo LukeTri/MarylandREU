@@ -12,11 +12,11 @@ from matplotlib import colors
 from scipy import interpolate
 
 FILE_PATH = "/Users/luke/PycharmProjects/MarylandREU/data"
-NN_PATH = "/net_mueller_b=0.1_art_temp=0.05_n=1000000_step=5_hs=50_layers=2"
+NN_PATH = "/net_pinn_uniform"
 FE_PATH = "/fe_mueller_b=0.1.csv"
 
 input_size = 2
-hidden_size = 50
+hidden_size = 10
 output_size = 1
 num_classes = 1
 learning_rate = 0.000001

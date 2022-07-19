@@ -11,11 +11,11 @@ from neural_nets.committor_nn import NeuralNet
 from matplotlib import colors
 
 FILE_PATH = "/Users/luke/PycharmProjects/MarylandREU/data"
-NN_PATH = "/net_mueller_b=0.1_art_temp=0.05_n=1000000_step=5_hs=50_layers=2"
+NN_PATH = "/net_pinn_EM"
 FE_PATH = "/fe_mueller_b=0.1.csv"
 
 input_size = 2
-hidden_size = 50
+hidden_size = 10
 output_size = 1
 num_classes = 1
 learning_rate = 0.1
@@ -49,7 +49,8 @@ X, Y = np.meshgrid(m, p)
 Z = np.zeros((len(p), len(m)))
 for i in range(len(p)):
     for j in range(len(m)):
-        tens = torch.tensor([X[i][j], Y[i][j]])
+        angle = 0
+        tens = torch.tensor([np.cos(angle)*X[i][j] + np.sin(angle)*Y[i][j], -np.sin(angle)*X[i][j] + np.cos(angle)*Y[i][j]])
         tens = tens.float()
         tens = tens.unsqueeze(0)
         Z[i][j] = model(tens)
@@ -97,7 +98,10 @@ for i in tqdm(range(len(rows))):
 X = arr[:, 0]
 Y = arr[:, 1]
 
-ind = fp.face_non_vectorized(X,Y) < 5
+if potential_func == "face":
+    ind = fp.face_non_vectorized(X,Y) < 5
+else:
+    ind = mp.MuellerPotentialNonVectorized(X,Y) < -36
 
 est_vals = est_vals[ind]
 act_vals = act_vals[ind]

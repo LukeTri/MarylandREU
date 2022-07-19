@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import torch
 
 FILE_PATH = "/Users/luke/PycharmProjects/MarylandREU/data"
-NN_PATH = "/net_mueller_b=0.1_art_temp=0.05_n=1000000_step=5_hs=50_layers=2"
+NN_PATH = "/test"
 EM_PATH = "/face_standard=0.33_n=1000000.csv"
 
 MUELLERMINA = torch.tensor([0.62347076, 0.02807048])
@@ -47,13 +47,8 @@ momentum = 0.90
 
 # Sampling parameters
 step_size = 100
-n = 100000
-x = np.array([0, 0])
-omega = 5
-sigma = 0.05
 b = 1 / 10
 b_prime = 1 / 20
-h = 10 ** -5
 
 
 
@@ -86,20 +81,6 @@ class NeuralNet(nn.Module):
         return out
 
 
-def chi_A_s(x):
-    m = torch.nn.Tanh()
-    if potential_func == "face":
-        return 0.5 - 0.5 * m(1000 * ((x - FACEMINA).pow(2).sum() - (radius + 0.02) ** 2))
-    return 0.5 - 0.5 * m(1000 * ((x - MUELLERMINA).pow(2).sum() - (radius + 0.02) ** 2))
-
-
-def chi_B_s(x):
-    m = torch.nn.Tanh()
-    if potential_func == "face":
-        return 0.5 - 0.5 * m(1000 * ((x - FACEMINB).pow(2).sum() - (radius + 0.02) ** 2))
-    return 0.5 - 0.5 * m(1000 * ((x - MUELLERMINB).pow(2).sum() - (radius + 0.02) ** 2))
-
-
 def chi_A(x):
     m = torch.nn.Tanh()
     if potential_func == "face":
@@ -117,8 +98,7 @@ def chi_B(x):
 def main():
     file = open(FILE_PATH + EM_PATH)
     csvreader = csv.reader(file)
-    header = []
-    header = next(csvreader)
+    next(csvreader)
     rows = []
     rows2 = []
     cutoff = False
@@ -173,11 +153,6 @@ def main():
 
     plt.contour(x_grid, y_grid, v_mpot_grid, np.linspace(np.amin(v_mpot_grid), np.amax(v_mpot_grid), 20))
     plt.show()
-    newX = np.zeros(len(X) // step_size)
-    newY = np.zeros(len(Y) // step_size)
-    for i in range(len(newX)):
-        newX[i] = X[i * step_size]
-        newY[i] = Y[i * step_size]
 
     s = np.vstack((X, Y)).T
 
