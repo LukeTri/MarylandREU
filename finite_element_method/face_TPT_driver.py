@@ -31,6 +31,8 @@ import csv
 # In[3]:
 potential_func = "mueller"
 
+OUTPUT_PATH = "/Users/luke/PycharmProjects/MarylandREU/data/fe_results/fe_mueller_b=0.2.csv"
+
 if potential_func == "face":
     # parameters for the face potential
     xa=-3
@@ -58,7 +60,7 @@ else:
     rb = 0.1 # radius of set B
 
 
-beta = 1/20 # beta = 1/(k_B T), T = temperature, k_B = Boltzmann's constant
+beta = 1/5 # beta = 1/(k_B T), T = temperature, k_B = Boltzmann's constant
 
 if potential_func == "face":
     Vbdry = 15  # level set of the outer boundary {x : fpot(x) = Vbdry}
@@ -72,7 +74,7 @@ else:
 generate_mesh = True
 
 # h0 is the desired scalind parameter for the mesh
-h0 = 0.04
+h0 = 0.03
 
 
 def face2(xy, a=np.array([-1, -1, -6.5, 0.7]), b=np.array([0, 0, 11, 0.6]),
@@ -211,6 +213,6 @@ def fpot(pts):
 q = FEM_committor_solver(pts,tri,Aind,Bind,fpot,beta)
 
 TPTdata = np.concatenate((pts,np.reshape(q,(Npts,1))),axis = 1)
-with open('/Users/luke/PycharmProjects/MarylandREU/data/fe_mueller_b=0.05.csv', 'w', newline='') as file:
+with open(OUTPUT_PATH, 'w', newline='') as file:
     mywriter = csv.writer(file, delimiter=',')
     mywriter.writerows(TPTdata)

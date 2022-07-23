@@ -29,7 +29,7 @@ loss = checkpoint['loss']
 
 model.eval()
 
-file = open('/Users/luke/PycharmProjects/MarylandREU/data/mueller_metadynamics_b=0.033_n=200000_precomputed.csv')
+file = open('/data/samples/mueller_metadynamics_b=0.033_n=200000_precomputed.csv')
 csvreader = csv.reader(file)
 header = []
 header = next(csvreader)
@@ -51,7 +51,7 @@ for i in range(len(rows)):
         samples[i][j] = float(rows[i][j])
 
 
-file = open('/Users/luke/PycharmProjects/MarylandREU/data/fe_mueller_b=0.1.csv')
+file = open('/data/fe_results/fe_mueller_b=0.1.csv')
 csvreader = csv.reader(file)
 header = []
 header = next(csvreader)

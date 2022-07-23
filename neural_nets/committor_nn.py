@@ -1,6 +1,4 @@
-from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR
-
-from Dataset import Dataset
+from neural_nets.Dataset import Dataset
 
 import torch.nn as nn
 import csv
@@ -12,8 +10,9 @@ import matplotlib.pyplot as plt
 import torch
 
 FILE_PATH = "/Users/luke/PycharmProjects/MarylandREU/data"
-NN_PATH = "/test"
-EM_PATH = "/face_standard=0.33_n=1000000.csv"
+NN_PATH = "/nets/direct_sampling_7"
+EM_PATH = "/samples/mueller_direct_b=0.05_points=100000_n=8000_3.csv"
+#EM_PATH = "/samples/mueller_direct_b=0.05_points=2000000.csv"
 
 MUELLERMINA = torch.tensor([0.62347076, 0.02807048])
 MUELLERMINB = torch.tensor([-0.55821361, 1.44174872])
@@ -25,28 +24,29 @@ yb=4.5
 FACEMINA = torch.tensor([xa, ya])
 FACEMINB = torch.tensor([xb, yb])
 
-potential_func = "face"
-art_temp = False
+potential_func = "mueller"
+art_temp = True
 metadyanamics = False
 
 
 radius = 0.1
 epsilon = 0.05
 
+step_size = 1
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyper-parameters
 input_size = 2
-hidden_size = 10
+hidden_size = 20
 output_size = 1
-num_epochs = 50
-batch_size = 100000
+num_epochs = 200
+batch_size = 50000
 learning_rate = 0.1
 num_classes = 1
 momentum = 0.90
 
 # Sampling parameters
-step_size = 100
 b = 1 / 10
 b_prime = 1 / 20
 
@@ -56,12 +56,12 @@ class NeuralNet(nn.Module):
     def __init__(self, input_size, hidden_size, num_classes):
         super(NeuralNet, self).__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
-        self.tanh2 = nn.Tanh()
+        self.tanh1 = nn.LeakyReLU()
+
         self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.tanh2 = nn.Tanh()
 
-        self.tanh1 = nn.Tanh()
         self.fc3 = nn.Linear(hidden_size, num_classes)
-
         self.sig3 = nn.Sigmoid()
 
     def forward(self, x):
@@ -125,8 +125,8 @@ def main():
                 updaters[i][j] = float(rows2[i][j])
 
     Npts,d = np.shape(arr)
-    X = arr[0:Npts:5, 0]
-    Y = arr[0:Npts:5, 1]
+    X = arr[0:Npts:step_size, 0]
+    Y = arr[0:Npts:step_size, 1]
     print(np.shape(X))
 
     plt.scatter(X, Y)
@@ -178,7 +178,7 @@ def main():
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer,gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer,gamma=0.998)
     # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     total_step = len(training_generator)
@@ -211,7 +211,7 @@ def main():
             if (epoch + 1) % 5 == 0 and i % 3 == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
                       .format(epoch + 1, num_epochs, i + 1, total_step, loss.item() / batch_size))
-        # scheduler.step()
+        #scheduler.step()
         # if (epoch + 1) % 5 == 0:
             # print(scheduler.state_dict()['_last_lr'])
 

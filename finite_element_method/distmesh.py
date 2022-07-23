@@ -61,9 +61,9 @@ def fixmesh(pts,tri):
         # reorder triangles with negative area
         print(idx_tri_reorder)
         print(tri[idx_tri_reorder])
-        temp = tri[idx_tri_reorder][0]
-        tri[idx_tri_reorder][0] = tri[idx_tri_reorder][1]
-        tri[idx_tri_reorder][1] = temp
+        temp = tri[idx_tri_reorder][0][0]
+        tri[idx_tri_reorder][0][0] = tri[idx_tri_reorder][0][1]
+        tri[idx_tri_reorder][0][1] = temp
         #tri[idx_tri_reorder,[0,1]] = tri[idx_tri_reorder,[1,0]]
     # remove triangles with too small area
     idx_keep = np.argwhere(np.absolute(A) > TOL*np.linalg.norm(A,np.inf))
@@ -80,7 +80,7 @@ def fixmesh(pts,tri):
 
 def distmesh2D(fd,fh,h0,bbox,pfix):
     # parameters
-    dptol=.005
+    dptol=.01
     ttol=.1
     Fscale=1.2 
     deltat=.2 
@@ -88,7 +88,7 @@ def distmesh2D(fd,fh,h0,bbox,pfix):
     deps=math.sqrt(np.finfo(float).eps)*h0
     MAXcount = 5000
     densityctrlfreq=30
-    jshow = 10  # display progress every jshow iterations
+    jshow = 10  # displays progress every jshow iterations
     
     # define the initial set of points by 
     # making a mesh of equilateral triangles with side h0 and

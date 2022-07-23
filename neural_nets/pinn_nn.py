@@ -1,6 +1,4 @@
-from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR
-
-from Dataset import Dataset
+from neural_nets.Dataset import Dataset
 
 import torch.nn as nn
 import csv
@@ -18,8 +16,8 @@ y_start = -0.5
 y_end = 2
 
 FILE_PATH = "/Users/luke/PycharmProjects/MarylandREU/data"
-NN_PATH = "/net_pinn_EM_2"
-EM_PATH = "/mueller_standard_b=0.033_n=1000000.csv"
+NN_PATH = "/nets/net_pinn_rar_5_epochs=1000_n=500"
+SAMPLE_PATH = "/samples/mueller_iterative_n=500_bound=-15"
 
 MUELLERMINA = torch.tensor([0.62347076, 0.02807048])
 MUELLERMINB = torch.tensor([-0.55821361, 1.44174872])
@@ -42,7 +40,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 input_size = 2
 hidden_size = 10
 output_size = 1
-num_epochs = 200
+num_epochs = 1000
 batch_size = 10000
 learning_rate = 0.2
 num_classes = 1
@@ -94,7 +92,7 @@ def chi_B(x):
 
 
 def main():
-    file = open(FILE_PATH + EM_PATH)
+    file = open(FILE_PATH + SAMPLE_PATH)
     csvreader = csv.reader(file)
     next(csvreader)
     rows = []
@@ -123,8 +121,8 @@ def main():
                 updaters[i][j] = float(rows2[i][j])
 
     Npts, d = np.shape(arr)
-    X = arr[0:Npts:25, 0]
-    Y = arr[0:Npts:25, 1]
+    X = arr[0:Npts:1, 0]
+    Y = arr[0:Npts:1, 1]
 
     if potential_func == "face":
         fp.plot_contours()
@@ -160,11 +158,13 @@ def main():
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer,gamma=0.997)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer,gamma=0.999)
     # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
+    is_good = False
     total_step = len(training_generator)
     for epoch in range(num_epochs):
+        if is_good:
+            break
         for i, (samples, labels) in enumerate(training_generator):
             optimizer.zero_grad()
             samples.requires_grad = True
@@ -172,13 +172,15 @@ def main():
             term1 = divs[0]
             term1 = term1 * b ** -1
             vals = divs[2]
-            vals2 = mp.mueller_grad_vectorized_torch(samples)
+            vals2 = -mp.mueller_grad_vectorized_torch(samples)
             term2 = torch.zeros(len(term1))
             for j in range(len(vals)):
                 term2[j] = torch.dot(vals[j], vals2[j])
 
             outputs = term1 + term2
             loss = loss_func(outputs, labels)
+            if loss.item() / batch_size > .01:
+                is_good = False
             loss.backward()
 
             optimizer.step()
@@ -192,7 +194,7 @@ def main():
                 # plt.show()
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
                       .format(epoch + 1, num_epochs, i + 1, total_step, loss.item() / batch_size))
-        # scheduler.step()
+        scheduler.step()
         # if (epoch + 1) % 5 == 0:
             # print(scheduler.state_dict()['_last_lr'])
 

@@ -1,5 +1,5 @@
 import time
-from Dataset import Dataset
+from neural_nets.Dataset import Dataset
 
 from euler_maruyama import euler_maruyama_white_noise_mueller as mp
 import numpy as np
@@ -195,7 +195,8 @@ def neural_net(x, y, probs):
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
-                'loss': loss}, '../data/mueller_model_diffusion_b=0.033_n=100000_hs=500_ep=5000_lr=0.01_bs=500.pth')
+                'loss': loss},
+        '../data/nets/mueller_model_diffusion_b=0.033_n=100000_hs=500_ep=5000_lr=0.01_bs=500.pth')
 
     return model
 

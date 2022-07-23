@@ -6,16 +6,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import torch
-from neural_nets.committor_nn import NeuralNet
-#from diffusion_map_mueller_nn import NeuralNet
+from neural_nets.diffusion_map_mueller_nn import NeuralNet as nn_dif
 from matplotlib import colors
 
+from neural_nets.net_architectures.layers2_act1ReLU_act2tanh import NeuralNet as net1
+from neural_nets.net_architectures.layers2_act1tanh_act2tanh import NeuralNet as net2
+
+nn_type = "1"
+
 FILE_PATH = "/Users/luke/PycharmProjects/MarylandREU/data"
-NN_PATH = "/net_pinn_EM"
-FE_PATH = "/fe_mueller_b=0.1.csv"
+NN_PATH = "/nets/direct_sampling_4"
+FE_PATH = "/fe_results/fe_mueller_b=0.1.csv"
 
 input_size = 2
-hidden_size = 10
+hidden_size = 20
 output_size = 1
 num_classes = 1
 learning_rate = 0.1
@@ -23,8 +27,10 @@ learning_rate = 0.1
 potential_func = "mueller"
 
 
-
-model = NeuralNet(input_size=input_size, hidden_size=hidden_size, num_classes=num_classes)
+if nn_type == "1":
+    model = net1(input_size=input_size, hidden_size=hidden_size, num_classes=num_classes)
+else:
+    model = net2(input_size=input_size, hidden_size=hidden_size, num_classes=num_classes)
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 
@@ -108,10 +114,11 @@ act_vals = act_vals[ind]
 X = X[ind]
 Y = Y[ind]
 
-print(est_vals)
-print(act_vals)
-
 diffs = est_vals - act_vals
+
+print(max(diffs))
+print(min(diffs))
+print(np.average(np.abs(diffs)))
 
 divnorm=colors.TwoSlopeNorm(vmin=min(diffs), vcenter=0., vmax=max(diffs))
 plt.scatter(X, Y, c=diffs, cmap='bwr',norm=divnorm)
